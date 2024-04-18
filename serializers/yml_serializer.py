@@ -19,6 +19,7 @@ class YMLSerializer(Serializer):
             '>' : 'XSGX'
         }
         self.preserve_indentation = preserve_indentation
+        self.parser = YMLParser(preserve_indentation = self.preserve_indentation)
 
     def serialize(self, escape_strs = None):
         for r in escape_strs or self.escape_strs:
@@ -49,16 +50,14 @@ class YMLSerializer(Serializer):
 
     @property
     def content(self):
-        parser = YMLParser(preserve_indentation=self.preserve_indentation)
-        parser.load(yml_str=self.data)
-        return parser.data
+        self.parser.load(yml_str=self.data)
+        return self.parser.data
 
     def content_dump(self, pri_lang, sanitize, root, **kwargs):
         kwargs['allow_unicode'] = True
         if pri_lang is not None:
             root = {pri_lang: root}
-        parser = YMLParser(preserve_indentation=self.preserve_indentation)
-        self.data = parser.dump(data = root)
+        self.data = self.parser.dump(data = root)
         self.deserialize()
         if sanitize:
             self.clean_data()

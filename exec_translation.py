@@ -1,6 +1,6 @@
 import argparse
 import json
-import os
+
 from main.diff_checker import DiffChecker
 from main.diff_merge import DiffMerge
 
@@ -11,10 +11,10 @@ if __name__ == '__main__':
     diff_parser = sub_parser.add_parser('diff')
     merge_parser = sub_parser.add_parser('merge')
     arg_parser.add_argument('--dry_run', default=0, type=int, choices=(0, 1), required=False)
-    arg_parser.add_argument('--clear_file_cache', default=0, type=int, choices=(0,1), required=False)
     merge_parser.add_argument('--overwrite', default=0, type=int, choices=(0,1))
     merge_parser.add_argument('--output', default='', required=False)
-    merge_parser.add_argument('--file_list', default=[], nargs=1, required=False, )
+    merge_parser.add_argument('--file_list', default=[], nargs=1, required=False)
+    merge_parser.add_argument('--lang_map', default=[], nargs=1, required=False)
     merge_parser.add_argument('--path_list', nargs='+', default=[], required=False)
     diff_parser.add_argument('--path_list', nargs='+', default=[], required=False)
     diff_parser.add_argument('--pri_lang', default='')
@@ -23,7 +23,6 @@ if __name__ == '__main__':
     diff_parser.add_argument('--output', default='', required=False)
     diff_parser.add_argument('--sanitize', default=0, type=int, choices=(0,1))
     args, _ = arg_parser.parse_known_args()
-    os.environ['clear_file_cache'] = '1'
     action = args.command
     if action == 'diff':
         if not args.file_list:
@@ -46,7 +45,8 @@ if __name__ == '__main__':
             overwrite=args.overwrite == 1,
             output_file=args.output,
             dry_run=args.dry_run,
-            path_list=args.path_list
+            path_list=args.path_list,
+            lang_map=args.lang_map
         )
         if not args.file_list:
             merge_parser.add_argument('--source', required=True)

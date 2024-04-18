@@ -4,14 +4,17 @@ from util.exceptions import PathDoesNotExist
 
 from serializers import CustomSerializer
 
+from constants.settings import FILE_TYPE
+
 class DiffMerge(object):
 
-    def __init__(self, source = None, dest = None, overwrite = False, output_file = None, path_list = [], dry_run = False) -> None:
+    def __init__(self, source = None, dest = None, overwrite = False, output_file = None, path_list = [], dry_run = False, lang_map = {}) -> None:
         self.source = FileObject(source)
         self.dest = FileObject(dest)
         self.output_file = None
         self.dry_run = dry_run
         self.path_list = path_list
+        self.lang_map = lang_map
         if not overwrite:
             self.output_file = FileObject(output_file or f'{self.source.file_name_without_extension}_{self.dest.file_name_without_extension}.{self.source.file_type}')
 
@@ -65,17 +68,22 @@ class DiffMerge(object):
             return data
         except KeyError as e:
             raise PathDoesNotExist(path, e)
+        
+    def update_lang_map(self, f, _type = 'source'):
+        lang_name = list(f.keys())[0][0]
+        if self.lang_map and _type in self.lang_map and lang_name in self.lang_map[_type]:
+            f[0][0] = self.lang_map[_type][lang_name]
 
     def merge(self):
         f1 = self.source.open_file()
         f2 = self.dest.open_file()
         for path in self.path_list or []:
-            if self.source.file_type == 'yml':
+            if self.source.file_type == FILE_TYPE.YML:
                 k = list(f1.keys())[0][0]
                 _f1 = self.get_path_obj_indent(k + '.' + path, f1)
             else:
                 _f1 = self.get_path_obj(path, f1)
-            if self.dest.file_type == 'yml':
+            if self.dest.file_type == FILE_TYPE.YML:
                 k = list(f2.keys())[0][0]
                 _f2 = self.get_path_obj_indent(k + '.' + path, f2)
             else:
@@ -84,6 +92,12 @@ class DiffMerge(object):
                 self.get_path_obj('.'.join(path.split('.')[:-1]))
             self._merge(_f2, _f1)
         if not self.path_list:
+            if self.source.file_type == FILE_TYPE.YML:
+                f1_lang_name = list(f1.keys())[0]
+                f2_lang_name = list(f2.keys())[0]
+                if f1_lang_name[0] != f2_lang_name[0]:
+                    f1[f2_lang_name] = f1[f1_lang_name]
+                    del f1[f1_lang_name]
             self._merge(f2, f1)
         serializer = CustomSerializer(self.source.file_type)
         data = serializer.content_dump(None, False, f2, ensure_ascii=False)

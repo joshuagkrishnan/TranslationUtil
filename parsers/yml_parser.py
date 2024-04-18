@@ -2,6 +2,8 @@ from collections import OrderedDict
 import re
 from util.exceptions import YMLParserError
 
+from constants.settings import YML_INDENT_LEVEL
+
 class YMLParser(object):
     """
         YML parser that reads each line and converts it into a OrderedDict
@@ -12,6 +14,7 @@ class YMLParser(object):
         self.data = OrderedDict()
         self.doc_seperator = doc_seperator
         self._preserve_indentation = preserve_indentation
+        print('_preserve_indentation', self._preserve_indentation)
         self.trim_whitespace = trim_whitespace
     
     @staticmethod
@@ -181,18 +184,24 @@ class YMLParser(object):
             if self.is_hashable(v):
                 if self.preserve_indentation(k):
                     indent = k[1]
-                res.append(' ' * indent + f'{k[0]}:')
-                self.dict_to_yml_str(v, indent + 2, res)
+                    res.append(' ' * indent + f'{k[0]}:')
+                else:
+                    res.append(' ' * indent + f'{k}:')
+                self.dict_to_yml_str(v, indent + YML_INDENT_LEVEL, res)
             elif type(v) is list:
                 if self.preserve_indentation(k):
                     indent = k[1]
-                res.append(' ' * indent + f'{k[0]}:')
+                    res.append(' ' * indent + f'{k[0]}:')
+                else:
+                    res.append(' ' * indent + f'{k}:')
                 for _v in v:
                     res.append(_v)
             else:
                 if self.preserve_indentation(v):
                     indent = v[1]
-                res.append(' ' * indent + f'{k}: {v[0]}')
+                    res.append(' ' * indent + f'{k}: {v[0]}')
+                else:
+                    res.append(' ' * indent + f'{k}: {v}')
         return res
     
     def load(self, file_path = None, yml_str = None):
